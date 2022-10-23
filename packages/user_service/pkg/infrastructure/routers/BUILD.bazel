@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "routers",
+    srcs = ["user.go"],
+    importpath = "github.com/sudo-nick16/showoff/packages/user_service/pkg/infrastructure/routers",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//packages/user_service/pkg/interface/controller",
+        "@com_github_gorilla_mux//:mux",
+    ],
+)

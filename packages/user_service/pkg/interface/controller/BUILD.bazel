@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "controller",
+    srcs = [
+        "app-controller.go",
+        "user-controller.go",
+    ],
+    importpath = "github.com/sudo-nick16/showoff/packages/user_service/pkg/interface/controller",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//packages/user_service/pkg/domain/models",
+        "//packages/user_service/pkg/usecase/interactor",
+        "@com_github_gorilla_mux//:mux",
+    ],
+)

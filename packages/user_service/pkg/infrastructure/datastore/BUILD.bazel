@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "datastore",
+    srcs = ["db.go"],
+    importpath = "github.com/sudo-nick16/showoff/packages/user_service/pkg/infrastructure/datastore",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//packages/user_service/pkg/config",
+        "//packages/user_service/types",
+        "@com_github_lib_pq//:pq",
+    ],
+)
