@@ -1,0 +1,9 @@
+bazel-bin
+bazel-out
+bazel-showoff
+bazel-testlogs
+
+node_modules
+bin
+
+

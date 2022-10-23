@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "outbox",
+    srcs = ["main.go"],
+    importpath = "github.com/sudo-nick16/showoff/packages/user_service/pkg/infrastructure/outbox",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//packages/user_service/pkg/config",
+        "//packages/user_service/types",
+        "@com_github_ThreeDotsLabs_watermill//:watermill",
+        "@com_github_ThreeDotsLabs_watermill//components/forwarder",
+        "@com_github_threedotslabs_watermill_kafka_v2//pkg/kafka",
+        "@com_github_threedotslabs_watermill_sql//pkg/sql",
+    ],
+)

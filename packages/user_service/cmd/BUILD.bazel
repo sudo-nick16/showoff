@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "cmd_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/sudo-nick16/showoff/packages/user_service/cmd",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//packages/user_service/pkg/config",
+        "//packages/user_service/pkg/infrastructure/datastore",
+        "//packages/user_service/pkg/infrastructure/outbox",
+        "//packages/user_service/pkg/infrastructure/routers",
+        "//packages/user_service/pkg/registry",
+        "@com_github_ThreeDotsLabs_watermill//:watermill",
+        "@com_github_gorilla_mux//:mux",
+        "@com_github_rs_cors//:cors",
+    ],
+)
+
+go_binary(
+    name = "user_service",
+    embed = [":cmd_lib"],
+    visibility = ["//visibility:public"],
+)

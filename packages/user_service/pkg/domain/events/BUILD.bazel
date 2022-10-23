@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "events",
+    srcs = [
+        "email-updated-event.go",
+        "events.go",
+        "user-created-event.go",
+        "username-updated-event.go",
+    ],
+    importpath = "github.com/sudo-nick16/showoff/packages/user_service/pkg/domain/events",
+    visibility = ["//visibility:public"],
+    deps = ["@com_github_google_uuid//:uuid"],
+)

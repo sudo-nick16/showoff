@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "interactor",
+    srcs = ["user-interactor.go"],
+    importpath = "github.com/sudo-nick16/showoff/packages/user_service/pkg/usecase/interactor",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//packages/user_service/pkg/domain/models",
+        "//packages/user_service/pkg/usecase/presenter",
+        "//packages/user_service/pkg/usecase/repository",
+    ],
+)
