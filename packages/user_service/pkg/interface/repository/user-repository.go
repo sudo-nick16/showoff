@@ -46,6 +46,7 @@ func (ur *userRepository) Create(u *models.User) (*models.User, error) {
 		if err == nil {
 			tx.Commit()
 		} else {
+            ur.logger.Info("Rolling back transaction", watermill.LogFields{"err": err.Error()})
 			tx.Rollback()
 		}
 	}()
@@ -78,6 +79,7 @@ func (ur *userRepository) Create(u *models.User) (*models.User, error) {
         return nil, err
     }
     err = publisher.Publish(config.C.KafkaTopic, message.NewMessage(watermill.NewULID(), payload))
+    log.Println("Error publishing message: ", err)
     if err != nil {
         return nil, err
     }

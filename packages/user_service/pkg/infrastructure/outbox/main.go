@@ -13,7 +13,6 @@ import (
 )
 
 func InitOutboxComponent(db types.DB, logger watermill.LoggerAdapter) {
-	// Setup the Forwarder component so it takes messages from MySQL subscription and pushes them to Google Pub/Sub.
 	sqlSubscriber, err := sql.NewSubscriber(
 		db,
 		sql.SubscriberConfig{

@@ -5,12 +5,33 @@ const username = document.querySelector('#username');
 const email = document.querySelector('#email');
 const pass = document.querySelector('#pass');
 const sub = document.querySelector('#submit');
+const change = document.querySelector('#change');
 
-id.value = 1
-name.value = 'John Doe';
-username.value = 'johndoe';
-email.value = 'damn@mail.com'
-pass.value = '123456';
+
+const setValues = () => {
+    let i = parseInt(localStorage.getItem('ind'));
+    i = i+1
+    id.value = Math.floor(Math.random() * 1000);
+    name.value = 'Nick' + i;
+    username.value = 'sudonick' + i;
+    email.value = 'nick' + i + '@gmail.com';
+    pass.value = '123456';
+    localStorage.setItem('ind', JSON.stringify(i));
+}
+
+const ind = localStorage.getItem('ind');
+if (!ind) {
+    localStorage.setItem('ind', JSON.stringify(4));
+    setValues()
+}else{
+    setValues();
+}
+
+
+change.addEventListener('click', (e) => {
+    e.preventDefault();
+    setValues();    
+});
 
 sub.addEventListener('click', (e) => {
   e.preventDefault();
