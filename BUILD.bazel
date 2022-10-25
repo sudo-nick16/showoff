@@ -1,4 +1,26 @@
-load("@bazel_gazelle//:def.bzl", "gazelle")
+load("@bazel_gazelle//:def.bzl", "DEFAULT_LANGUAGES", "gazelle", "gazelle_binary")
 
 # gazelle:prefix github.com/sudo-nick16/showoff
-gazelle(name = "gazelle")
+# gazelle:exclude node_modules
+# gazelle:js_package_file package.json
+gazelle(
+    name = "gazelle-go",
+    gazelle = ":gazelle_go",
+)
+
+gazelle_binary(
+    name = "gazelle_go",
+    languages = DEFAULT_LANGUAGES,
+)
+
+gazelle(
+    name = "gazelle-js",
+    gazelle = ":gazelle_js",
+)
+
+gazelle_binary(
+    name = "gazelle_js",
+    languages = DEFAULT_LANGUAGES + [
+        "@com_github_benchsci_rules_nodejs_gazelle//gazelle",
+    ],
+)
