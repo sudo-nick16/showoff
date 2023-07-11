@@ -1,0 +1,34 @@
+http:
+  port: 4200
+apiEndpoints:
+  # login:
+  #   host: localhost
+  #   paths: '/account/login'
+  apex:
+    host: localhost
+    paths: ["/auth/*", "/users/*"]
+  stellar:
+    host: localhost
+    paths: "/projectss/*"
+serviceEndpoints:
+  apexSrv:
+    url: "http://localhost:6969"
+  stellarSrv:
+    url: "http://localhost:6970"
+policies:
+  - proxy
+pipelines:
+  apex:
+    apiEndpoints:
+      - apex
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: apexSrv
+  stellar:
+    apiEndpoints:
+      - stellar
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: stellarSrv

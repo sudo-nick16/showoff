@@ -1,6 +1,8 @@
 import express from "express";
 import { constants } from "./constants";
 import passport from "passport";
+import cors from "cors";
+import slugify from "slugify";
 import PassportGoogle from "passport-google-oauth20";
 import { PrismaClient, User } from "@prisma/client";
 import { UserRepo } from "./userRepository";
@@ -11,6 +13,7 @@ import {
 } from "./utils";
 import cookieParser from "cookie-parser";
 import { TokenPayload } from "./types";
+import { authMiddleware } from "./middleware";
 
 const GoogleStrategy = PassportGoogle.Strategy;
 const prisma = new PrismaClient();
@@ -27,10 +30,9 @@ passport.use(
       const u = await userRepo.getUserByEmail(profile._json.email!);
       if (!u) {
         const newUser = await userRepo.createUser({
-          username: profile._json.email!,
+          username: slugify(profile._json.email!),
           name: profile._json.name!,
           email: profile._json.email!,
-          password: "",
           img: profile._json.picture!,
         });
         if (!newUser) {
@@ -45,9 +47,13 @@ passport.use(
 
 const main = async () => {
   const app = express();
-  app.use(passport.initialize());
+  app.use(cors({
+    origin: ["http://localhost:3000", constants.ClientURL], 
+    credentials: true,
+  }));
   app.use(express.json());
   app.use(cookieParser());
+  app.use(passport.initialize());
 
   app.get(
     "/auth/google",
@@ -64,9 +70,8 @@ const main = async () => {
     (req, res) => {
       const user = req.user as User;
       const tokenPayload: TokenPayload = {
-        id: user.id,
+        user_id: user.id,
         username: user.username,
-        email: user.email,
         tokenVersion: user.tokenVersion,
       };
       const refreshToken = createRefreshToken(tokenPayload);
@@ -90,7 +95,7 @@ const main = async () => {
       if (!tp) {
         res.send({ error: "invalid refresh token", accessToken: "" });
       }
-      const user = await userRepo.getUserById(tp.id);
+      const user = await userRepo.getUserById(tp.user_id);
       if (!user) {
         res.send({ error: "user not found", accessToken: "" });
       }
@@ -98,15 +103,49 @@ const main = async () => {
         res.send({ error: "invalid refresh token", accessToken: "" });
       }
       const accessToken = createAccessToken({
-        id: user!.id,
+        user_id: user!.id,
         username: user!.username,
-        email: user!.email,
         tokenVersion: user!.tokenVersion,
       });
       res.send({ error: "", accessToken });
     } catch (e) {
       res.send({ error: e.message, accessToken: "" });
     }
+  });
+
+  app.get("/users/me", authMiddleware, async (req, res) => {
+    const id = (req.user! as TokenPayload).user_id;
+    const user = await userRepo.getUserById(id);
+    if (!user) {
+      res.status(400).json({ error: "could get your profile." });
+    }
+    res.json(user);
+  });
+
+  app.get("/users/:user_id", async (req, res) => {
+    const userId = req.params.user_id;
+    const user = await userRepo.getUserById(parseInt(userId));
+    if (!user) {
+      res.status(400).json({ error: "user not found." });
+    }
+    res.json(user);
+  });
+
+  app.post("/users", authMiddleware, async (req, res) => {
+    const { username, name } = req.body;
+    const id = (req.user! as User).id;
+    const user = await userRepo.updateUser(id, {
+      username,
+      name,
+    });
+    if (!user) {
+      res.status(400).json({ error: "couldn't update user" });
+    }
+    res.json(user);
+  });
+
+  app.post("/auth/logout", async (_, res) => {
+    res.clearCookie("sid");
   });
 
   app.listen(constants.Port, () => {

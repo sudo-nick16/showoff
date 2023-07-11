@@ -7,3 +7,11 @@ export type Project = {
   image: string;
   tech: string[];
 };
+
+export type User = {
+  id: number;
+  name: string;
+  username: string;
+  email: string;
+  img: string
+};

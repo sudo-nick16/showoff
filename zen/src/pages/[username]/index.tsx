@@ -71,8 +71,8 @@ const Profile = () => {
         </TabsList>
         <TabsContent value="projects" className="w-full">
           <div className="flex flex-wrap gap-6 justify-center">
-            {projects.map((p) => (
-              <ProjectCard key={p.name} project={p} />
+            {projects.map((p, i) => (
+              <ProjectCard key={i} project={p} />
             ))}
           </div>
         </TabsContent>

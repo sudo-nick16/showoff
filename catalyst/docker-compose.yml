@@ -1,0 +1,20 @@
+version: '3'
+
+networks:
+  showoff-network:
+    driver: bridge
+
+services:
+
+  email_service:
+    container_name: showoff-catalyst
+    restart: always
+    build:
+      context: . 
+      dockerfile: catalyst.Dockerfile
+    environment:
+      - ENV=development
+    ports:
+      - 6969:6969
+    networks:
+      - showoff-network

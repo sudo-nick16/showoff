@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "license": "MIT",
   "private": true,
-  "workspaces": ["zen", "apex"],
+  "workspaces": ["zen", "apex", "nimbus"],
   "scripts": {
     "zen": "yarn workspace zen",
-    "apex": "yarn workspace apex"
+    "apex": "yarn workspace apex",
+    "nimbus": "yarn workspace nimbus"
   }
 }
