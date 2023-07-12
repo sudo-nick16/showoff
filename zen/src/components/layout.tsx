@@ -6,6 +6,7 @@ import axios from "axios";
 import constants from "@/constants";
 import { logout, setAccessToken, setUser, useAppDispatch } from "@/store/store";
 import useAxios from "@/hooks/useAxios";
+import ProjectForm from "./project-form";
 
 type Props = {
   children: React.ReactNode;
@@ -57,6 +58,7 @@ const Layout: NextPage<Props> = ({ children }) => {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <Navbar />
+      <ProjectForm />
       {children}
     </ThemeProvider>
   );

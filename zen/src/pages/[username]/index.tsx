@@ -1,36 +1,49 @@
 import Container from "@/components/container";
 import ProjectCard from "@/components/project-card";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import UserFormWrapper from "@/components/user-form";
+import { RootState, showUserForm, useAppDispatch } from "@/store/store";
 import { Project } from "@/types";
-import { GitHubLogoIcon, GlobeIcon } from "@radix-ui/react-icons";
+import { GitHubLogoIcon, GlobeIcon, Pencil1Icon } from "@radix-ui/react-icons";
 import Image from "next/image";
+import { useRouter } from "next/router";
 import React from "react";
+import { useSelector } from "react-redux";
 
 const Profile = () => {
+  const appDispatch = useAppDispatch();
+  const authState = useSelector<RootState, RootState["auth"]>(
+    (store) => store.auth
+  );
+  const router = useRouter();
+  const { username } = router.query;
+
   const projects: Project[] = [
     {
-      name: "smark",
+      title: "smark",
       slug: "smark",
-      description: "a bookmarking tool asrt asrt af arst arst arst arst arts rastra tsrats arst rast arst rast asrtra strast arst arstar tsrast rst  rtar st",
-      image: "https://lh3.googleusercontent.com/bVx9i0d1fMqiqJhc8UNVfF20jKkeKzDKJLowJzXw3aOCWHJMAJg6ruGrVN0t7knUV3xVthRwScNjsLEz87UGdoYEuw=w128-h128-e365-rj-sc0x00ffffff",
+      description:
+        "a bookmarking tool asrt asrt af arst arst arst arst arts rastra tsrats arst rast arst rast asrtra strast arst arstar tsrast rst  rtar st",
+      img: "https://lh3.googleusercontent.com/bVx9i0d1fMqiqJhc8UNVfF20jKkeKzDKJLowJzXw3aOCWHJMAJg6ruGrVN0t7knUV3xVthRwScNjsLEz87UGdoYEuw=w128-h128-e365-rj-sc0x00ffffff",
       tech: ["react", "nextjs", "typescript", "tailwindcss"],
-      github: "https://github.com/sudo-nick16/smark",
-      url: "https://smark.vercel.app",
+      github_url: "https://github.com/sudo-nick16/smark",
+      hosted_url: "https://smark.vercel.app",
     },
     {
-      name: "smark",
+      title: "smark",
       slug: "smark",
       description: "a bookmarking tool",
-      image: "https://lh3.googleusercontent.com/bVx9i0d1fMqiqJhc8UNVfF20jKkeKzDKJLowJzXw3aOCWHJMAJg6ruGrVN0t7knUV3xVthRwScNjsLEz87UGdoYEuw=w128-h128-e365-rj-sc0x00ffffff",
+      img: "https://lh3.googleusercontent.com/bVx9i0d1fMqiqJhc8UNVfF20jKkeKzDKJLowJzXw3aOCWHJMAJg6ruGrVN0t7knUV3xVthRwScNjsLEz87UGdoYEuw=w128-h128-e365-rj-sc0x00ffffff",
       tech: ["react", "nextjs", "typescript", "tailwindcss"],
-      github: "https://github.com/sudo-nick16/smark",
-      url: "https://smark.vercel.app",
+      github_url: "https://github.com/sudo-nick16/smark",
+      hosted_url: "https://smark.vercel.app",
     },
   ];
   return (
-    <Container className="py-8 flex-col justify-center items-center">
-      <div className="mt-8 mx-auto w-fit flex flex-col items-center sm:flex-row gap-x-10">
-        <div className="relative w-44 h-44 rounded-xl">
+    <Container className="py-8 flex flex-col justify-center items-center">
+      <div className="mt-8 mx-auto w-fit flex flex-col items-center sm:flex-row gap-y-4 gap-x-10">
+        <div className="relative w-40 h-40 rounded-xl">
           <Image
             src={"https://avatars.githubusercontent.com/u/73229823?v=4"}
             alt="sudo-nick"
@@ -38,28 +51,36 @@ const Profile = () => {
           />
         </div>
         <div className="flex flex-col items-center sm:items-start py-3">
-          <div className="flex">
-            <h2 className="text-xl font-bold">Sudo nick</h2>
+          <div className="flex flex-wrap justify-center items-end">
+            <h2 className="text-2xl w-fit font-bold">Sudo nick</h2>
             <h2 className="text-xl ml-3 font-bold">@sudonick</h2>
           </div>
-          <p className="mt-3 w-80 break-words line-clamp-2">
-            Lorem ipsum dolor sit amet, officia excepteur ex fugiat
-            reprehenderit enim labore culpa sint ad nisi Lorem pariatur mollit
-            ex esse exercitation amet. Nisi anim cupidatat excepteur officia.
-            Reprehenderit nostrud nostrud ipsum Lorem est aliquip amet voluptate
-            voluptate dolor minim nulla est proident. Nostrud officia pariatur
-            ut officia. Sit irure elit esse ea nulla sunt ex occaecat
-            reprehenderit commodo officia dolor Lorem duis laboris cupidatat
-            officia voluptate. Culpa proident adipisicing id nulla nisi laboris
-            ex in Lorem sunt duis officia eiusmod. Aliqua reprehenderit commodo
-            ex non excepteur duis sunt velit enim. Voluptate laboris sint
-            cupidatat ullamco ut ea consectetur et est culpa et culpa duis.
-          </p>
+          <h2 className="mt-3 text-xl break-words line-clamp-2">
+            Systems Engineer
+          </h2>
           <div className="flex flex-wrap mt-4 gap-3">
-            <GitHubLogoIcon className="cursor-pointer" width={20} height={20} />
-            <GlobeIcon width={20} height={20} />
+            <GitHubLogoIcon className="cursor-pointer" width={25} height={25} />
+            <GlobeIcon width={25} height={25} />
           </div>
         </div>
+        {authState.user?.username === username && (
+          <UserFormWrapper>
+            <Button
+              onClick={() =>
+                appDispatch(
+                  showUserForm({
+                    username: authState.user!.username,
+                    name: authState.user!.name,
+                    headline: authState.user!.headline,
+                    description: authState.user!.description,
+                  })
+                )
+              }
+            >
+              Edit Profile
+            </Button>
+          </UserFormWrapper>
+        )}
       </div>
       <Tabs
         defaultValue="projects"

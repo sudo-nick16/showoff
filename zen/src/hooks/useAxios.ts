@@ -14,7 +14,6 @@ const useAxios = () => {
     baseURL: constants.ServerURL,
     timeout: 5000,
     headers: {
-      "Content-Type": "application/json",
       Authorization: `JWT ${store.getState().auth.accessToken}`,
     },
     validateStatus: () => {

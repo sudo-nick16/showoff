@@ -15,15 +15,15 @@ import { Button } from "./ui/button";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
-import { RootState, useAppDispatch, logout } from "@/store/store";
+import { RootState, useAppDispatch, logout, showUserForm } from "@/store/store";
 import useAxios from "@/hooks/useAxios";
+import UserFormWrapper from "./user-form";
 
 type Props = {};
-const Navbar: NextPage<Props> = ({ }) => {
+const Navbar: NextPage<Props> = ({}) => {
   const authState = useSelector<RootState, RootState["auth"]>(
     (state) => state.auth
   );
-  console.log({ authState });
   const router = useRouter();
   const appDispatch = useAppDispatch();
   const path = router.pathname;
@@ -33,51 +33,62 @@ const Navbar: NextPage<Props> = ({ }) => {
     const res = await api.post("/auth/logout", {}, {});
     if (!res.data.error) {
       router.push("/login");
-      appDispatch(logout())
+      appDispatch(logout());
     }
-  }
+  };
 
   return (
     <div className="border-b">
-      <Container className="py-4 flex justify-end gap-x-4">
-        <Input className="w-96" placeholder="Search" />
-        {authState.user ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <div className="relative h-10 w-10">
-                <Image
-                  src="https://avatars.githubusercontent.com/u/73229823?v=4"
-                  layout="fill"
-                  alt=""
-                />
-              </div>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <Link href={`/${authState.user.username}`}>
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-              </Link>
-              <Link href={`/my-projects`}>
-                <DropdownMenuItem>Projects</DropdownMenuItem>
-              </Link>
-              <DropdownMenuItem onClick={logoutHandler}>Sign out</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : (
-          <>
-            {path === "/login" ? null : (
-              <Link href={"/login"}>
-                <Button variant={"outline"}>Log in</Button>
-              </Link>
-            )}
-            {path === "/signup" ? null : (
-              <Link href={"/signup"}>
-                <Button>Sign up</Button>
-              </Link>
-            )}
-          </>
-        )}
+      <Container className="py-4 px-3 flex justify-between items-center gap-x-4">
+        <div className="relative hidden sm:block w-[120px] min-w-[120px] h-[40px] min-h-[40px]">
+          <Image
+            src={"/showoff.svg"}
+            layout="fill"
+            alt="Showoff Logo"
+          />
+        </div>
+        <div className="flex w-full sm:w-auto gap-x-4">
+          <Input className="sm:w-96" placeholder="Search" />
+          {authState.user ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <div className="relative h-10 w-10">
+                  <Image
+                    src="https://avatars.githubusercontent.com/u/73229823?v=4"
+                    layout="fill"
+                    alt=""
+                  />
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <Link href={`/${authState.user.username}`}>
+                  <DropdownMenuItem>Profile</DropdownMenuItem>
+                </Link>
+                <Link href={`/my-projects`}>
+                  <DropdownMenuItem>Projects</DropdownMenuItem>
+                </Link>
+                <DropdownMenuItem onClick={logoutHandler}>
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              {path === "/login" ? null : (
+                <Link href={"/login"}>
+                  <Button variant={"outline"}>Log in</Button>
+                </Link>
+              )}
+              {path === "/signup" ? null : (
+                <Link href={"/signup"}>
+                  <Button>Sign up</Button>
+                </Link>
+              )}
+            </>
+          )}
+        </div>
       </Container>
     </div>
   );
