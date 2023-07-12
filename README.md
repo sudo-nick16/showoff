@@ -11,3 +11,5 @@ Microservices:
 | Api Gateway | nimbus |
 | Handle projects | stellar |
 | Handle emails | catalyst |
+
+![showoff arch](https://github.com/sudo-nick16/showoff-4/blob/master/showoff_arch.png)
