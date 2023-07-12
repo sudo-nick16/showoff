@@ -4,7 +4,7 @@ dotenv.config();
 
 export const constants = {
   Port: process.env.PORT || 6969,
-  PostgresURI: process.env.POSTGRESURI || "",
+  DatabaseUrl: process.env.DATABASE_URL || "",
   GoogleClientID: process.env.GOOGLE_CLIENT_ID || "",
   GoogleClientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
   ServerURL: process.env.SERVER_URL || "http://localhost:6969",

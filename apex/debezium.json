@@ -1,0 +1,14 @@
+{
+  "name": "apex-db-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "plugin.name": "pgoutput",
+    "database.hostname": "postgres",
+    "database.port": "5432",
+    "database.user": "root",
+    "database.password": "cooldb123",
+    "database.dbname": "showoff",
+    "database.server.name": "postgres",
+    "table.include.list": "public.events"
+  }
+}

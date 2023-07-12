@@ -48,7 +48,7 @@ passport.use(
 const main = async () => {
   const app = express();
   app.use(cors({
-    origin: ["http://localhost:3000", constants.ClientURL], 
+    origin: ["http://localhost:3000", constants.ClientURL],
     credentials: true,
   }));
   app.use(express.json());
@@ -81,7 +81,7 @@ const main = async () => {
         secure: true,
         sameSite: "none",
       });
-      res.redirect(constants.ClientURL + "/");
+      res.redirect(constants.ClientURL + "/" + user.username);
     }
   );
 
@@ -89,18 +89,22 @@ const main = async () => {
     const refreshToken = req.cookies.sid;
     if (!refreshToken) {
       res.send({ error: "no refresh token provided", accessToken: "" });
+      return;
     }
     try {
       const tp = verifyRefreshToken(refreshToken);
       if (!tp) {
         res.send({ error: "invalid refresh token", accessToken: "" });
+        return;
       }
       const user = await userRepo.getUserById(tp.user_id);
       if (!user) {
         res.send({ error: "user not found", accessToken: "" });
+        return;
       }
       if (user!.tokenVersion !== tp.tokenVersion) {
         res.send({ error: "invalid refresh token", accessToken: "" });
+        return;
       }
       const accessToken = createAccessToken({
         user_id: user!.id,
@@ -108,6 +112,7 @@ const main = async () => {
         tokenVersion: user!.tokenVersion,
       });
       res.send({ error: "", accessToken });
+      return;
     } catch (e) {
       res.send({ error: e.message, accessToken: "" });
     }
@@ -118,6 +123,7 @@ const main = async () => {
     const user = await userRepo.getUserById(id);
     if (!user) {
       res.status(400).json({ error: "could get your profile." });
+      return;
     }
     res.json(user);
   });
@@ -127,6 +133,7 @@ const main = async () => {
     const user = await userRepo.getUserById(parseInt(userId));
     if (!user) {
       res.status(400).json({ error: "user not found." });
+      return;
     }
     res.json(user);
   });
@@ -140,6 +147,7 @@ const main = async () => {
     });
     if (!user) {
       res.status(400).json({ error: "couldn't update user" });
+      return;
     }
     res.json(user);
   });

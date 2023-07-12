@@ -49,7 +49,12 @@ export class UserRepo {
     return undefined;
   }
 
-  async createUser(user: { username: string, name: string, email: string, img: string }) {
+  async createUser(user: {
+    username: string;
+    name: string;
+    email: string;
+    img: string;
+  }) {
     const newUser = await this.pc.user.create({
       data: {
         username: user.username,
@@ -58,13 +63,34 @@ export class UserRepo {
         img: user.img,
       },
     });
+    console.log({ newUser })
     if (newUser) {
+      try {
+        const event = await this.pc.event.create({
+          data: {
+            type: "create_user",
+            data: {
+              id: newUser.id,
+              username: newUser.username,
+              email: newUser.email,
+            },
+          },
+        });
+        if (!event) {
+          console.log("Error creating event");
+        }
+      } catch (err) {
+        console.log("Error creating event");
+      }
       return newUser;
     }
     return undefined;
   }
 
-  async updateUser(id: number, { username, name }: { username: string, name: string }) {
+  async updateUser(
+    id: number,
+    { username, name }: { username: string; name: string }
+  ) {
     const updatedUser = await this.pc.user.update({
       where: {
         id: id,
@@ -75,6 +101,23 @@ export class UserRepo {
       },
     });
     if (updatedUser) {
+      try {
+        const event = await this.pc.event.create({
+          data: {
+            type: "update_user",
+            data: {
+              id: updatedUser.id,
+              username: updatedUser.username,
+              email: updatedUser.email,
+            },
+          },
+        });
+        if (!event) {
+          console.log("Error creating update_user_event");
+        }
+      } catch (err) {
+        console.log("Error creating update_user_event");
+      }
       return updatedUser;
     }
     return undefined;
