@@ -7,11 +7,13 @@ networks:
 services:
 
   email_service:
-    container_name: showoff-catalyst
+    container_name: showoff-email-service
     restart: always
     build:
       context: . 
-      dockerfile: catalyst.Dockerfile
+      dockerfile: email.Dockerfile
+    volumes:
+      - .:/showoff/user_service
     environment:
       - ENV=development
     ports:

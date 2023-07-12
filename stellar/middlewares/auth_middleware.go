@@ -7,7 +7,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/sudo-nick16/showoff/stellar/types"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func AuthMiddleware(config *types.Config) fiber.Handler {
@@ -27,13 +26,13 @@ func AuthMiddleware(config *types.Config) fiber.Handler {
 			if t.Method.Alg() != jwt.SigningMethodRS256.Alg() {
 				return nil, errors.New("invalid token")
 			}
-			return []byte(config.AccessPublicKey), nil
+			return config.AccessPublicKey, nil
 		})
 		if err != nil {
 			return fiber.NewError(fiber.StatusForbidden, "token is invalid")
 		}
 		tokenClaims := token.Claims.(jwt.MapClaims)
-		if tokenClaims["userId"] == nil {
+		if tokenClaims["user_id"] == nil {
 			return fiber.NewError(fiber.StatusForbidden, "invalid token")
 		}
 		if tokenClaims["exp"] == nil {
@@ -42,15 +41,14 @@ func AuthMiddleware(config *types.Config) fiber.Handler {
 		if tokenClaims["tokenVersion"] == nil {
 			return fiber.NewError(fiber.StatusForbidden, "invalid token")
 		}
-		uid, err := primitive.ObjectIDFromHex(tokenClaims["userId"].(string))
-		if err != nil {
+		if tokenClaims["username"] == nil {
 			return fiber.NewError(fiber.StatusForbidden, "invalid token")
 		}
 		authContext := &types.AuthTokenClaims{
-			UserId:       uid,
+			UserId:       int(tokenClaims["user_id"].(float64)),
 			Username:     tokenClaims["username"].(string),
 			TokenVersion: int(tokenClaims["tokenVersion"].(float64)),
-			Exp:          int64(tokenClaims["exp"].(float64)),
+			Exp:          int(tokenClaims["exp"].(float64)),
 		}
 		c.Locals("AuthContext", authContext)
 		return c.Next()

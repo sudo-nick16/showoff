@@ -8,18 +8,19 @@ import (
 	kafka "github.com/segmentio/kafka-go"
 )
 
-type EmailRequestedEventPayload struct {
-	Email string `json:"email"`
-	Link  string `json:"link"`
+type UserEventPayload struct {
+	Id       int    `json:"id"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
 }
 
-type EmailRequestedEvent struct {
-	Id   string `json:"id"`
-	Type string `json:"type"`
-	Data EmailRequestedEventPayload
+type Event struct {
+	Id   string      `json:"id"`
+	Type string      `json:"type"`
+	Data interface{} `json:"data"`
 }
 
-type subscriber struct {
+type Subscriber struct {
 	EmailClient *EmailClient
 	Brokers     []string
 	Partition   int
@@ -27,28 +28,22 @@ type subscriber struct {
 	Offset      int64
 }
 
-type Subscriber interface {
-	init() error
-}
-
-func NewSubscriber(offset int64, emailClient *EmailClient, brokers []string, topic string, partition int) Subscriber {
-	return &subscriber{
+func NewSubscriber(offset int64, emailClient *EmailClient, brokers []string, topic string, partition int) *Subscriber {
+	return &Subscriber{
 		EmailClient: emailClient,
 		Offset:      offset,
 		Partition:   partition,
 		Topic:       topic,
 		Brokers:     brokers,
 	}
-
 }
 
-func (s *subscriber) init() error {
+func (s *Subscriber) init() error {
 
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:   s.Brokers,
 		Topic:     s.Topic,
 		Partition: s.Partition,
-		MinBytes:  1e3,  // 10KB
 		MaxBytes:  10e6, // 10MB
 	})
 
@@ -57,25 +52,32 @@ func (s *subscriber) init() error {
 	for {
 		m, err := r.ReadMessage(context.Background())
 		if err != nil {
-			log.Printf("Err: %+v\n", err)
+			log.Printf("Err: cannot read message %+v\n", err)
 			break
 		}
 
 		log.Printf("message at offset %d: %s = %s\n", m.Offset, string(m.Key), string(m.Value))
 
-		var event EmailRequestedEvent
+		event := Event{}
 		err = json.Unmarshal(m.Value, &event)
 		if err != nil {
-			log.Printf("Err: %+v\n", err)
+			log.Printf("Err: cannot unmarshal event payload %+v\n", err)
 			return err
 		}
-		msg, err := NewEmail(s.EmailClient.from, event.Data.Email, event.Data.Link, "Showoff Reset Mail")
-		if err != nil {
-			log.Fatalf("Error creating mail: %v", err)
-		}
-		err = s.EmailClient.Send(msg)
-		if err != nil {
-			log.Fatalf("Error sending mail: %v", err)
+		eventType := event.Data.(map[string]interface{})["type"]
+		switch eventType {
+		case "user_created":
+			email := event.Data.(map[string]interface{})["email"].(string)
+			msg, err := NewEmail(s.EmailClient.from, email, "Go ahead and showcase your projects.", "Welcome to showoff!")
+			if err != nil {
+				log.Fatalf("Error creating mail: %v", err)
+			}
+			err = s.EmailClient.Send(msg)
+			if err != nil {
+				log.Fatalf("Error sending mail: %v", err)
+			}
+		default:
+			log.Printf("Unknown event type: %s", eventType)
 		}
 	}
 

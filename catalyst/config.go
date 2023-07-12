@@ -33,8 +33,8 @@ func SetupConfig() *Config {
 	}
 	return &Config{
 		KafkaConfig: KafkaConfig{
-			Topic:     env.GetEnv("KAFKA_TOPIC", "emails"),
-			Brokers:   env.GetEnvAsSlice("KAFKA_TOPIC", []string{"showoff-kafka:9092", "kafka:9093"}, ","),
+			Topic:     env.GetEnv("KAFKA_TOPIC", "users"),
+            Brokers:   env.GetEnvAsSlice("KAFKA_TOPIC", []string{"kafka:9092", "kafka:9093"}, ","),
 			Partition: env.GetEnvAsInt("KAFKA_PARTITION", 0),
 			FromEmail: env.GetEnv("FROM_EMAIL", "showoff@gmail.com"),
 		},

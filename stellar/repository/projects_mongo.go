@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/gosimple/slug"
 	"github.com/sudo-nick16/showoff/stellar/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -29,9 +30,10 @@ func (r *ProjectRepo) Create(e *types.Project) (*types.Project, error) {
 	if res.Err() != nil {
 		return nil, errors.New("User not found.")
 	}
+	slugTitle := slug.Make(e.Title)
 	filter := bson.M{
 		"$and": bson.A{
-			bson.M{"title": e.Title},
+			bson.M{"title": slugTitle},
 			bson.M{"user_id": e.UserId},
 		},
 	}
@@ -47,31 +49,27 @@ func (r *ProjectRepo) Create(e *types.Project) (*types.Project, error) {
 	return e, nil
 }
 
-func (r *ProjectRepo) Get(id string) (*types.Project, error) {
-	idObj, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return nil, errors.New("Invalid project id.")
-	}
-	res := r.coll.FindOne(context.TODO(), bson.M{"_id": idObj})
+func (r *ProjectRepo) Get(id primitive.ObjectID) (*types.Project, error) {
+	res := r.coll.FindOne(context.TODO(), bson.M{"_id": id})
 	if res.Err() != nil {
 		return nil, errors.New("Project not found.")
 	}
 	var project types.Project
-	err = res.Decode(&project)
+	err := res.Decode(&project)
 	if err != nil {
 		return nil, err
 	}
 	return &project, nil
 }
 
-func (r *ProjectRepo) GetAllByUserId(userId string) (*[]types.Project, error) {
+func (r *ProjectRepo) GetAllByUserId(userId int) (*[]types.Project, error) {
 	filter := bson.M{
 		"user_id": userId,
 	}
 	var projects []types.Project
 	cur, err := r.coll.Find(context.TODO(), filter)
 	if err != nil {
-		return nil, errors.New("Could not update project.")
+		return nil, errors.New("Could not find project.")
 	}
 	for cur.Next(context.TODO()) {
 		var p types.Project
@@ -106,54 +104,6 @@ func (r *ProjectRepo) UpdateTitle(id string, title string) error {
 	return nil
 }
 
-func (r *ProjectRepo) UpdateDescription(id string, description string) error {
-	_, err := r.coll.UpdateByID(context.TODO(), id, bson.M{"$set": bson.M{"description": description}})
-	if err != nil {
-		return errors.New("Could not update project description.")
-	}
-	return nil
-}
-
-func (r *ProjectRepo) UpdateStory(id string, story string) error {
-	_, err := r.coll.UpdateByID(context.TODO(), id, bson.M{"$set": bson.M{"story": story}})
-	if err != nil {
-		return errors.New("Could not update project story.")
-	}
-	return nil
-}
-
-func (r *ProjectRepo) AddTag(id string, tag string) error {
-	_, err := r.coll.UpdateByID(context.TODO(), id, bson.M{"$push": bson.M{"tags": tag}})
-	if err != nil {
-		return errors.New("Could not add tag.")
-	}
-	return nil
-}
-
-func (r *ProjectRepo) RemoveTag(id string, tag string) error {
-	_, err := r.coll.UpdateByID(context.TODO(), id, bson.M{"$pop": bson.M{"tags": tag}})
-	if err != nil {
-		return errors.New("Could not remove tag.")
-	}
-	return nil
-}
-
-func (r *ProjectRepo) UpdateGithubURL(id string, githubURL string) error {
-	_, err := r.coll.UpdateByID(context.TODO(), id, bson.M{"$set": bson.M{"github_url": githubURL}})
-	if err != nil {
-		return errors.New("Could not remove tag.")
-	}
-	return nil
-}
-
-func (r *ProjectRepo) UpdateHostedURL(id string, hostedURL string) error {
-	_, err := r.coll.UpdateByID(context.TODO(), id, bson.M{"$set": bson.M{"hosted_url": hostedURL}})
-	if err != nil {
-		return errors.New("Could not remove tag.")
-	}
-	return nil
-}
-
 func (r *ProjectRepo) Update(id string, userId string, e *types.Project) error {
 	filter := bson.M{
 		"$and": bson.A{
@@ -173,4 +123,35 @@ func (r *ProjectRepo) Update(id string, userId string, e *types.Project) error {
 		return errors.New("Could not update project.")
 	}
 	return nil
+}
+
+func (r *ProjectRepo) UpdateUsername(id int, username string) error {
+	_, err := r.coll.UpdateMany(context.TODO(), bson.M{
+		"user_id": id,
+	}, bson.M{"$set": bson.M{
+		"username": username,
+	}})
+	if err != nil {
+		return errors.New("Could not update username.")
+	}
+	return nil
+}
+
+func (r *ProjectRepo) GetByUserAndProjectId(uid int, projectId primitive.ObjectID) (*types.Project, error) {
+	filter := bson.M{
+		"$and": bson.A{
+			bson.M{"user_id": uid},
+			bson.M{"_id": projectId},
+		},
+	}
+	project := &types.Project{}
+	res := r.coll.FindOne(context.TODO(), filter)
+	if res.Err() != nil {
+		return nil, errors.New("Project not found.")
+	}
+	err := res.Decode(project)
+	if err != nil {
+		return nil, err
+	}
+	return project, nil
 }

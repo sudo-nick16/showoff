@@ -16,14 +16,14 @@ type ReverseProxy struct {
 func main() {
 	config := setupConfig()
 
-	proxyMap := make(map[string]*ReverseProxy)
+	proxyMap := make(map[string]ReverseProxy)
 
 	for k, v := range config.Servers {
 		url, err := url.Parse(v)
 		if err != nil {
-			panic(err)
+			log.Fatal("Error parsing url: ", err)
 		}
-		proxyMap[k] = &ReverseProxy{
+		proxyMap[k] = ReverseProxy{
 			url,
 			httputil.NewSingleHostReverseProxy(url),
 		}
@@ -31,8 +31,13 @@ func main() {
 
 	handler := func() func(http.ResponseWriter, *http.Request) {
 		return func(w http.ResponseWriter, r *http.Request) {
-			var p *httputil.ReverseProxy
+			log.Println("Request received for ", r.URL.Host+r.URL.Path, r.URL.Hostname())
+			p := &httputil.ReverseProxy{}
 			var path = strings.Split(r.URL.Path, "/")[1]
+			if path == "" {
+				w.WriteHeader(http.StatusBadRequest)
+        return
+			}
 			p = proxyMap[path].proxy
 			r.Host = proxyMap[path].url.Host
 			log.Println("Forwarding request to ", proxyMap[path].url.Host+r.URL.Path)
@@ -44,6 +49,6 @@ func main() {
 
 	err := http.ListenAndServe(":"+config.Port, nil)
 	if err != nil {
-		panic(err)
+		log.Fatal("Error starting server: ", err)
 	}
 }

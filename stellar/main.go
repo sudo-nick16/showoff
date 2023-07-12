@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 
 func main() {
 	config := setupConfig()
+	fmt.Println(config)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
@@ -27,6 +29,8 @@ func main() {
 	}
 
 	app := fiber.New(fiber.Config{
+		EnableTrustedProxyCheck: true,
+		TrustedProxies:          []string{"localhost:4200", "localhost"},
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
 			var e *fiber.Error
@@ -40,20 +44,30 @@ func main() {
 		},
 	})
 
+	fmt.Println(config.Origin)
+
 	corsMiddleware := cors.New(cors.Config{
 		AllowOrigins:     config.Origin,
+		AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
+		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
 		AllowCredentials: true,
 	})
 
 	app.Use(corsMiddleware)
+	app.Use(func(c *fiber.Ctx) error {
+		fmt.Println("request: ", c.OriginalURL(), " ", c.Method())
+		return c.Next()
+	})
 
 	projectRepo := repository.NewProjectRepo(client, config)
 
 	app.Get("/projects/:project_id", handlers.GetProject(projectRepo))
 
-	app.Delete("/projects", middlewares.AuthMiddleware(config), handlers.GetProject(projectRepo))
+	app.Get("/projects/u/:user_id", handlers.GetProjects(projectRepo))
 
-	app.Put("/projects", middlewares.AuthMiddleware(config), handlers.GetProject(projectRepo))
+	app.Delete("/projects", middlewares.AuthMiddleware(config), handlers.DeleteProject(projectRepo))
+
+	app.Put("/projects", middlewares.AuthMiddleware(config), handlers.UpdateProject(projectRepo))
 
 	app.Post("/projects", middlewares.AuthMiddleware(config), handlers.CreateProject(projectRepo))
 

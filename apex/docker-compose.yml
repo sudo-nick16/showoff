@@ -27,7 +27,6 @@ services:
       KAFKA_JMX_PORT: 9991
     ports:
       - 9092:9092
-      - 9021:9021
 
   debezium:
     container_name: showoff-dz-connect

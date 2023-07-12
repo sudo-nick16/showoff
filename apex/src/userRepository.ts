@@ -68,7 +68,7 @@ export class UserRepo {
       try {
         const event = await this.pc.event.create({
           data: {
-            type: "create_user",
+            type: "user_created",
             data: {
               id: newUser.id,
               username: newUser.username,
@@ -104,7 +104,7 @@ export class UserRepo {
       try {
         const event = await this.pc.event.create({
           data: {
-            type: "update_user",
+            type: "user_updated",
             data: {
               id: updatedUser.id,
               username: updatedUser.username,

@@ -6,13 +6,14 @@ COPY go.mod ./
 COPY go.sum ./
 
 RUN go mod download
+RUN apk add alpine-sdk
 
 COPY . .
 
-RUN go build -v -o ./bin/main ./main.go
+RUN go build -v -o ./bin/catalyst
 
 #stage
-FROM alpine:3.17
+FROM golang:1.19-alpine
 
 ENV ENV=development
 
@@ -20,4 +21,4 @@ WORKDIR /showoff/catalyst
 
 COPY --from=build /showoff/catalyst/bin ./
 
-CMD ["./main"]
+CMD ["./catalyst"]

@@ -12,7 +12,7 @@ func verifyAccessToken(token string, config *types.Config) (*jwt.Token, error) {
 		if t.Method.Alg() != jwt.SigningMethodRS256.Alg() {
 			return nil, errors.New("invalid token")
 		}
-		return []byte(config.AccessPublicKey), nil
+		return config.AccessPublicKey, nil
 	})
 	if err != nil {
 		return jwtToken, err

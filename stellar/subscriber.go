@@ -87,7 +87,7 @@ func (s *subscriber) init() error {
 				log.Fatalf("Error creating mail: %v", err)
 			}
 		} else if event.Type == "user_updated" {
-			_, err = s.UserRepo.Create(usr)
+			_, err = s.UserRepo.Update(usr)
 			if err != nil {
 				log.Fatalf("Error creating mail: %v", err)
 			}

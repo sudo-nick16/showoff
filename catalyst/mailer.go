@@ -11,10 +11,6 @@ type EmailClient struct {
 	from   string
 }
 
-type Email interface {
-	Send() error
-}
-
 func NewEmailClient(from string, smtpServerDomain string, smtpPort int, smtpUser string, smtpPassword string) (*EmailClient, error) {
 	client, err := mail.NewClient(smtpServerDomain, mail.WithPort(smtpPort), mail.WithSMTPAuth(mail.SMTPAuthPlain), mail.WithUsername(smtpUser), mail.WithPassword(smtpPassword))
 	if err != nil {
