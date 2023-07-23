@@ -2,36 +2,37 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider = "prisma-client-js"
+    provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
 }
 
 model User {
-  id           Int      @id @unique @default(autoincrement())
-  email        String   @unique
-  name         String
-  username     String   @unique
-  headline     String?  @default("")
-  description  String?  @default("")
-  img          String
-  githubId     String?  @unique
-  website      String?  @default("")
-  tokenVersion Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+    id           Int      @id @unique @default(autoincrement())
+    email        String   @unique
+    name         String
+    username     String   @unique
+    headline     String?  @default("")
+    description  String?  @default("")
+    img          String
+    githubId     String?  @unique
+    website      String?  @default("")
+    tokenVersion Int      @default(0)
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
 
-  @@map("users")
+    @@map("users")
 }
 
-model Event {
-  id        Int      @id @unique @default(autoincrement())
-  type      String
-  data      Json
-  createdAt DateTime @default(now())
+model OutboxTable {
+    id            String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    aggregatetype String @db.VarChar(255)
+    aggregateid   String @db.VarChar(255)
+    type          String @db.VarChar(255)
+    payload       Json
 
-  @@map("events")
+    @@map("events")
 }

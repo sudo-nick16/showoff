@@ -63,24 +63,28 @@ export class UserRepo {
         img: user.img,
       },
     });
-    console.log({ newUser })
+    console.log({ newUser });
     if (newUser) {
       try {
-        const event = await this.pc.event.create({
+        const event = await this.pc.outboxTable.create({
           data: {
             type: "user_created",
-            data: {
+            aggregateid: newUser.id.toString(),
+            aggregatetype: "user",
+            payload: {
               id: newUser.id,
               username: newUser.username,
+              name: newUser.name,
               email: newUser.email,
             },
           },
         });
+        console.log({ event });
         if (!event) {
           console.log("Error creating event");
         }
       } catch (err) {
-        console.log("Error creating event");
+        console.log("Error creating event", err.message);
       }
       return newUser;
     }
@@ -89,7 +93,7 @@ export class UserRepo {
 
   async updateUser(
     id: number,
-    { username, name }: { username: string; name: string }
+    { username, name, description, headline, githubId, website }: { username: string; name: string; description: string; headline: string, githubId: string, website: string }
   ) {
     const updatedUser = await this.pc.user.update({
       where: {
@@ -98,15 +102,22 @@ export class UserRepo {
       data: {
         username: username,
         name: name,
+        description: description,
+        headline: headline,
+        githubId: githubId,
+        website: website,
       },
     });
     if (updatedUser) {
       try {
-        const event = await this.pc.event.create({
+        const event = await this.pc.outboxTable.create({
           data: {
             type: "user_updated",
-            data: {
+            aggregateid: updatedUser.id.toString(),
+            aggregatetype: "user",
+            payload: {
               id: updatedUser.id,
+              name: updatedUser.name,
               username: updatedUser.username,
               email: updatedUser.email,
             },
@@ -116,7 +127,7 @@ export class UserRepo {
           console.log("Error creating update_user_event");
         }
       } catch (err) {
-        console.log("Error creating update_user_event");
+        console.log("Error creating update_user_event: ", err.message);
       }
       return updatedUser;
     }

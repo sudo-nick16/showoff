@@ -1,14 +1,18 @@
 {
-  "name": "apex-db-connector",
+  "name": "apex-db-connector3",
   "config": {
     "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
-    "plugin.name": "pgoutput",
+    "tasks.max": "1",
     "database.hostname": "postgres",
     "database.port": "5432",
     "database.user": "root",
     "database.password": "cooldb123",
     "database.dbname": "showoff",
+    "topic.prefix": "user",
     "database.server.name": "postgres",
-    "table.include.list": "public.events"
+    "tombstones.on.delete": "false",
+    "table.whitelist": "public.events",
+    "transforms": "outbox",
+    "transforms.outbox.type": "io.debezium.transforms.outbox.EventRouter"
   }
 }

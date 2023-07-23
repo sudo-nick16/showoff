@@ -1,12 +1,3 @@
-/*
-  Warnings:
-
-  - You are about to drop the `User` table. If the table is not empty, all the data it contains will be lost.
-
-*/
--- DropTable
-DROP TABLE "User";
-
 -- CreateTable
 CREATE TABLE "users" (
     "id" SERIAL NOT NULL,
@@ -23,6 +14,17 @@ CREATE TABLE "users" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "events" (
+    "id" UUID NOT NULL DEFAULT gen_random_uuid(),
+    "aggregatetype" VARCHAR(255) NOT NULL,
+    "aggregateid" VARCHAR(255) NOT NULL,
+    "type" VARCHAR(255) NOT NULL,
+    "payload" JSONB NOT NULL,
+
+    CONSTRAINT "events_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex

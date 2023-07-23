@@ -128,9 +128,9 @@ const main = async () => {
     res.json(user);
   });
 
-  app.get("/users/:user_id", async (req, res) => {
-    const userId = req.params.user_id;
-    const user = await userRepo.getUserById(parseInt(userId));
+  app.get("/users/:username", async (req, res) => {
+    const username = req.params.username;
+    const user = await userRepo.getUserByUsername(username);
     if (!user) {
       res.status(400).json({ error: "user not found." });
       return;
@@ -138,12 +138,16 @@ const main = async () => {
     res.json(user);
   });
 
-  app.post("/users", authMiddleware, async (req, res) => {
-    const { username, name } = req.body;
-    const id = (req.user! as User).id;
+  app.put("/users", authMiddleware, async (req, res) => {
+    const { username, name, headline, description, githubId, website } = req.body;
+    const id = (req.user! as TokenPayload).user_id;
     const user = await userRepo.updateUser(id, {
       username,
       name,
+      headline,
+      description,
+      website,
+      githubId,
     });
     if (!user) {
       res.status(400).json({ error: "couldn't update user" });
@@ -153,7 +157,15 @@ const main = async () => {
   });
 
   app.post("/auth/logout", async (_, res) => {
-    res.clearCookie("sid");
+    res.cookie("sid", "", {
+      expires: new Date(Date.now()),
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+    });
+    res.status(200).json({
+      message: "logged out",
+    })
   });
 
   app.listen(constants.Port, () => {

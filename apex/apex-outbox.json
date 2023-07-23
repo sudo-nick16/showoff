@@ -1,0 +1,23 @@
+{
+    "name": "apex-outbox",
+    "config": {
+        "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+        "tasks.max": "1",
+        "database.hostname": "postgres",
+        "database.port": "5432",
+        "database.user": "root",
+        "database.password": "cooldb123",
+        "database.dbname": "showoff",
+        "database.server.name": "postgres",
+        "schema.include.list": "public",
+        "topic.prefix": "users",
+        "table.include.list": "public.events",
+        "tombstones.on.delete": "false",
+        "transforms": "outbox",
+        "database.history.kafka.bootstrap.servers": "kafka:9092",
+        "transforms.outbox.type": "io.debezium.transforms.outbox.EventRouter",
+        "transforms.outbox.table.fields.additional.placement": "type:envelope:type",
+        "topic.creation.default.replication.factor": 1,
+        "topic.creation.default.partitions": 1
+    }
+}
