@@ -3,99 +3,132 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"log"
 
 	kafka "github.com/segmentio/kafka-go"
 	"github.com/sudo-nick16/showoff/stellar/repository"
 	"github.com/sudo-nick16/showoff/stellar/types"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type UserEventPayload struct {
-	UserId   string `json:"id"`
+type EventHeader struct {
+	Id interface{} `json:"id"`
+}
+
+type UserPayload struct {
+	Id       int    `json:"id"`
+	Email    string `json:"email"`
+	Name     string `json:"name"`
 	Username string `json:"username"`
 }
 
-type UserEvent struct {
-	Id   string           `json:"id"`
-	Type string           `json:"type"`
-	Data UserEventPayload `json:"data"`
+type EventPayload struct {
+	Payload string `json:"payload"`
+	Type    string `json:"type"`
 }
 
-type subscriber struct {
-	UserRepo  *repository.UserRepo
-	Brokers   []string
-	Partition int
-	Topic     string
-	Offset    int64
+type Message struct {
+	Payload EventPayload `json:"payload"`
 }
 
-type Subscriber interface {
-	init() error
+type Subscriber struct {
+	userRepo *repository.UserRepo
+	projectRepo *repository.ProjectRepo
+	reader   *kafka.Reader
 }
 
-func NewSubscriber(offset int64, userRepo *repository.UserRepo, brokers []string, topic string, partition int) Subscriber {
-	return &subscriber{
-		UserRepo:  userRepo,
-		Offset:    offset,
-		Partition: partition,
-		Topic:     topic,
-		Brokers:   brokers,
-	}
-
-}
-
-func (s *subscriber) init() error {
-
-	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:   s.Brokers,
-		Topic:     s.Topic,
-		Partition: s.Partition,
-		MinBytes:  1e3,  // 10KB
-		MaxBytes:  10e6, // 10MB
+func NewSubscriber(userRepo *repository.UserRepo, projectRepo *repository.ProjectRepo, config *types.Config) (*Subscriber, error) {
+	reader := kafka.NewReader(kafka.ReaderConfig{
+		Brokers:  config.KafkaConfig.Brokers,
+		Topic:    config.KafkaConfig.Topic,
+		GroupID:  config.KafkaConfig.GroupId,
+		MinBytes: 1e3,  // 10KB
+		MaxBytes: 10e6, // 10MB
 	})
+	if reader == nil {
+		return nil, errors.New("cannot create kafka reader")
+	}
+	return &Subscriber{
+		userRepo: userRepo,
+		reader:   reader,
+    projectRepo: projectRepo,
+	}, nil
+}
 
-	r.SetOffset(s.Offset)
+func unmarshalUser(str string) (*types.User, error) {
+	payload := UserPayload{}
 
+	err := json.Unmarshal([]byte(str), &payload)
+	if err != nil {
+		log.Fatalf("error: could not unmarshal user from message payload - %v\n", err)
+	}
+
+	usr := &types.User{
+		UserId:   payload.Id,
+		Username: payload.Username,
+		Name:     payload.Name,
+		Email:    payload.Email,
+	}
+	return usr, nil
+}
+
+func (s *Subscriber) initialize() {
 	for {
-		m, err := r.ReadMessage(context.Background())
+		message, err := s.reader.FetchMessage(context.Background())
 		if err != nil {
-			log.Printf("Err: %+v\n", err)
-			break
+			log.Fatalf("error: could not read message from kafka - %v\n", err)
 		}
 
-		log.Printf("message at offset %d: %s = %s\n", m.Offset, string(m.Key), string(m.Value))
+		log.Printf("message at offset %d: %s = %s\n", message.Offset, string(message.Key), string(message.Value))
 
-		var event UserEvent
-		err = json.Unmarshal(m.Value, &event)
+		messageValue := Message{}
+		err = json.Unmarshal(message.Value, &messageValue)
 		if err != nil {
-			log.Printf("Err: %+v\n", err)
-			return err
+			log.Printf("error: could not unmarshal the kafka message - %v\n", err)
 		}
-		id, err := primitive.ObjectIDFromHex(event.Data.UserId)
-		if err != nil {
-			log.Printf("Err: %+v\n", err)
-			return err
-		}
-		usr := &types.User{
-			ID:       id,
-			Username: event.Data.Username,
-		}
-		if event.Type == "user_created" {
-			_, err = s.UserRepo.Create(usr)
-			if err != nil {
-				log.Fatalf("Error creating mail: %v", err)
+
+		switch messageValue.Payload.Type {
+		case "user_created":
+			{
+				usr, err := unmarshalUser(messageValue.Payload.Payload)
+				if err != nil {
+					log.Printf("error: could not unmarshal user from message payload - %v\n", err)
+				} else {
+					_, err = s.userRepo.Create(usr)
+					if err != nil {
+						log.Printf("error: could not create user - %v\n", err)
+					}
+				}
+				if err = s.reader.CommitMessages(context.Background(), message); err != nil {
+					log.Fatalf("error: could not commit message - %v\n", err)
+				}
 			}
-		} else if event.Type == "user_updated" {
-			_, err = s.UserRepo.Update(usr)
-			if err != nil {
-				log.Fatalf("Error creating mail: %v", err)
+		case "user_updated":
+			{
+				usr, err := unmarshalUser(messageValue.Payload.Payload)
+				if err != nil {
+					log.Printf("error: could not unmarshal user from message payload - %v\n", err)
+				} else {
+					_, err = s.userRepo.Update(usr)
+					if err != nil {
+						log.Printf("error: could not update user - %v\n", err)
+					}
+				}
+				if err = s.reader.CommitMessages(context.Background(), message); err != nil {
+					log.Fatalf("error: could not commit message - %v\n", err)
+				}
+			}
+		default:
+			{
+				log.Printf("error: unexpected event type (%v) - %v\n", messageValue.Payload.Type, err)
 			}
 		}
 	}
+}
 
-	if err := r.Close(); err != nil {
-		log.Fatal("failed to close reader:", err)
+func (s *Subscriber) Close() error {
+	if err := s.reader.Close(); err != nil {
+		log.Fatal("error: failed to close the kafka reader - ", err)
 		return err
 	}
 	return nil

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/gosimple/slug"
 	"github.com/sudo-nick16/showoff/stellar/types"
@@ -32,6 +33,8 @@ func (r *PostRepo) Create(e *types.Post) (*types.Post, error) {
 	if p == nil {
 		return nil, errors.New("Project not found.")
 	}
+	e.CreatedAt = primitive.NewDateTimeFromTime(time.Now())
+	e.UpdatedAt = primitive.NewDateTimeFromTime(time.Now())
 	post, err := r.coll.InsertOne(context.TODO(), e)
 	if err != nil {
 		return nil, err
@@ -74,7 +77,7 @@ func (r *PostRepo) GetByUserId(userId int) ([]*types.Post, error) {
 	return posts, nil
 }
 
-func (r *PostRepo) GetByProjectId(projectId primitive.ObjectID) ([]*types.Post, error) {
+func (r *PostRepo) GetAllByProjectId(projectId primitive.ObjectID) ([]*types.Post, error) {
 	posts := []*types.Post{}
 	cursor, err := r.coll.Find(context.TODO(), bson.M{
 		"project_id": projectId,
@@ -118,12 +121,14 @@ func (r *PostRepo) DeleteByProjectId(projectId primitive.ObjectID) error {
 
 func (r *PostRepo) Update(e *types.Post) (*types.Post, error) {
 	res, err := r.coll.UpdateOne(context.TODO(), bson.M{
-		"_id": e.Id,
+		"_id":        e.Id,
+		"project_id": e.ProjectId,
 	}, bson.M{
 		"$set": bson.M{
-			"title": e.Title,
-			"slug":  slug.Make(e.Title),
-			"body":  e.Body,
+			"title":      e.Title,
+			"slug":       slug.Make(e.Title),
+			"body":       e.Body,
+			"updated_at": primitive.NewDateTimeFromTime(time.Now()),
 		},
 	})
 	if err != nil {

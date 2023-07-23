@@ -5,7 +5,9 @@ go 1.19
 require (
 	github.com/gofiber/fiber/v2 v2.47.0
 	github.com/golang-jwt/jwt/v5 v5.0.0
+	github.com/gosimple/slug v1.13.1
 	github.com/joho/godotenv v1.5.1
+	github.com/mattn/go-sqlite3 v1.14.17
 	github.com/segmentio/kafka-go v0.4.42
 	github.com/sudo-nick16/env v0.0.0-20230429175840-e15389d00a0b
 	go.mongodb.org/mongo-driver v1.12.0
@@ -15,7 +17,6 @@ require (
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/gosimple/slug v1.13.1 // indirect
 	github.com/gosimple/unidecode v1.0.1 // indirect
 	github.com/klauspost/compress v1.16.3 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect

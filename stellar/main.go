@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"time"
 
@@ -18,19 +17,26 @@ import (
 
 func main() {
 	config := setupConfig()
-	fmt.Println(config)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(config.MongoURI))
 	if err != nil {
-		log.Panic("Couldn't connect to mongodb.")
+		log.Panicf("error: could not connect to mongodb - %v", err)
 	}
 
+	userRepo := repository.NewUserRepo(client, config)
+	projectRepo := repository.NewProjectRepo(client, config)
+	postRepo := repository.NewPostRepo(client, projectRepo, config)
+
+	subscriber, err := NewSubscriber(userRepo, projectRepo, config)
+	go subscriber.initialize()
+	defer subscriber.Close()
+
 	app := fiber.New(fiber.Config{
-		EnableTrustedProxyCheck: true,
-		TrustedProxies:          []string{"localhost:4200", "localhost"},
+		// EnableTrustedProxyCheck: true,
+		// TrustedProxies:          []string{"localhost:4200", "localhost"},
 		ErrorHandler: func(ctx *fiber.Ctx, err error) error {
 			code := fiber.StatusInternalServerError
 			var e *fiber.Error
@@ -44,8 +50,6 @@ func main() {
 		},
 	})
 
-	fmt.Println(config.Origin)
-
 	corsMiddleware := cors.New(cors.Config{
 		AllowOrigins:     config.Origin,
 		AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
@@ -54,22 +58,40 @@ func main() {
 	})
 
 	app.Use(corsMiddleware)
-	app.Use(func(c *fiber.Ctx) error {
-		fmt.Println("request: ", c.OriginalURL(), " ", c.Method())
-		return c.Next()
-	})
+	// app.Use(func(c *fiber.Ctx) error {
+	// 	log.Println("request: ", c.OriginalURL(), " ", c.Method())
+	// 	return c.Next()
+	// })
 
-	projectRepo := repository.NewProjectRepo(client, config)
+	// app.Post("/projects", middlewares.AuthMiddleware(config), handlers.CreateProject(projectRepo))
+	app.Post("/projects", middlewares.AuthMiddleware(config), handlers.CreateProject(projectRepo))
 
+	// app.Get("/projects/u/:username", handlers.GetProjects(projectRepo))
+	app.Get("/users/:username/projects", handlers.GetProjects(projectRepo))
+
+	// app.Get("/projects/:username/:project_slug", handlers.GetProjectByUsernameAndProjectSlug(projectRepo, postRepo))
+	app.Get("/users/:username/projects/:project_slug", handlers.GetProjectByUsernameAndProjectSlug(projectRepo, postRepo))
+
+	// app.Get("/projects/:project_id", handlers.GetProject(projectRepo))
 	app.Get("/projects/:project_id", handlers.GetProject(projectRepo))
 
-	app.Get("/projects/u/:user_id", handlers.GetProjects(projectRepo))
+	// app.Put("/projects", middlewares.AuthMiddleware(config), handlers.UpdateProject(projectRepo))
+	app.Put("/projects/:project_id", middlewares.AuthMiddleware(config), handlers.UpdateProject(projectRepo))
 
-	app.Delete("/projects", middlewares.AuthMiddleware(config), handlers.DeleteProject(projectRepo))
+	// app.Delete("/projects", middlewares.AuthMiddleware(config), handlers.DeleteProject(projectRepo))
+	app.Delete("/projects/:project_id", middlewares.AuthMiddleware(config), handlers.DeleteProject(projectRepo))
 
-	app.Put("/projects", middlewares.AuthMiddleware(config), handlers.UpdateProject(projectRepo))
+	// app.Post("/posts", handlers.CreatePost(postRepo))
+	app.Post("/projects/:project_id/posts", middlewares.AuthMiddleware(config), handlers.CreatePost(postRepo))
 
-	app.Post("/projects", middlewares.AuthMiddleware(config), handlers.CreateProject(projectRepo))
+  // app.Get("/posts/:project_id", handlers.GetPostByProjectId(postRepo))
+  app.Get("/projects/:project_id/posts", handlers.GetPostByProjectId(postRepo))
+
+	// app.Put("/projects/:project_id/posts/:post_id", middlewares.AuthMiddleware(config), handlers.CreatePost(postRepo))
+	app.Put("/projects/:project_id/posts/:post_id", middlewares.AuthMiddleware(config), handlers.CreatePost(postRepo))
+
+	// app.Delete("/projects/:project_id/posts/:post_id", middlewares.AuthMiddleware(config), handlers.CreatePost(postRepo))
+	app.Delete("/posts/:post_id", middlewares.AuthMiddleware(config), handlers.DeletePost(postRepo))
 
 	app.Listen(":" + config.Port)
 }

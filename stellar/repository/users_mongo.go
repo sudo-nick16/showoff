@@ -35,7 +35,7 @@ func (r *UserRepo) Create(user *types.User) (*types.User, error) {
 }
 
 func (r *UserRepo) Update(user *types.User) (*types.User, error) {
-	filter := bson.M{"user_id": user.ID}
+	filter := bson.M{"user_id": user.UserId}
 	update := bson.M{"$set": bson.M{
 		"username": user.Username,
 		"name":     user.Name,
