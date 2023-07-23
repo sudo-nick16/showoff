@@ -35,12 +35,20 @@ func main() {
 			p := &httputil.ReverseProxy{}
 			var path = strings.Split(r.URL.Path, "/")[1]
 			if path == "" {
+				log.Println("Invalid Path: ", path)
 				w.WriteHeader(http.StatusBadRequest)
-        return
+				return
 			}
 			p = proxyMap[path].proxy
+			if p == nil {
+				log.Println("Path not found: ", path)
+				w.WriteHeader(http.StatusBadRequest)
+				return
+			}
+			log.Println("Path found: ", path)
 			r.Host = proxyMap[path].url.Host
-			log.Println("Forwarding request to ", proxyMap[path].url.Host+r.URL.Path)
+			r.URL.Path = strings.Replace(r.URL.Path, "/"+path, "", 1)
+			log.Println("Forwarding request to ", r.Host)
 			p.ServeHTTP(w, r)
 		}
 	}
