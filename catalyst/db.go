@@ -14,6 +14,8 @@ type repo struct {
 type Repo interface {
 	IncreaseOffset() error
 	GetOffset() (int64, error)
+	ResetOffset() error
+	SetOffset(o int) error
 }
 
 func NewConn() (*sql.DB, error) {
@@ -60,7 +62,21 @@ func NewRepo(conn *sql.DB) Repo {
 }
 
 func (r *repo) IncreaseOffset() error {
-	sqlStmt := "update kafka set offset += 1"
+	sqlStmt := "update kafka set offset = offset + 1"
+	_, err := r.conn.Exec(sqlStmt)
+	fmt.Printf("%q: %s\n", err, sqlStmt)
+	return err
+}
+
+func (r *repo) ResetOffset() error {
+	sqlStmt := "update kafka set offset = 0"
+	_, err := r.conn.Exec(sqlStmt)
+	fmt.Printf("%q: %s\n", err, sqlStmt)
+	return err
+}
+
+func (r *repo) SetOffset(offset int) error {
+	sqlStmt := "update kafka set offset = " + string(offset)
 	_, err := r.conn.Exec(sqlStmt)
 	fmt.Printf("%q: %s\n", err, sqlStmt)
 	return err

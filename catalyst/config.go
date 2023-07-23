@@ -8,10 +8,9 @@ import (
 )
 
 type KafkaConfig struct {
-	Topic     string   `json:"topic"`
-	Brokers   []string `json:"brokers"`
-	Partition int      `json:"partition"`
-	FromEmail string   `json:"fromEmail"`
+	Topic   string   `json:"topic"`
+	Brokers []string `json:"brokers"`
+	GroupId string   `json:"groupId"`
 }
 
 type SmtpConfig struct {
@@ -22,6 +21,7 @@ type SmtpConfig struct {
 }
 
 type Config struct {
+	FromEmail   string
 	KafkaConfig KafkaConfig
 	SmtpConfig  SmtpConfig
 }
@@ -29,15 +29,15 @@ type Config struct {
 func SetupConfig() *Config {
 	err := godotenv.Load()
 	if err != nil {
-		log.Print("No .env found.")
+		log.Print("error: could not load .env file")
 	}
 	return &Config{
 		KafkaConfig: KafkaConfig{
-			Topic:     env.GetEnv("KAFKA_TOPIC", "users"),
-            Brokers:   env.GetEnvAsSlice("KAFKA_TOPIC", []string{"kafka:9092", "kafka:9093"}, ","),
-			Partition: env.GetEnvAsInt("KAFKA_PARTITION", 0),
-			FromEmail: env.GetEnv("FROM_EMAIL", "showoff@gmail.com"),
+			Topic:   env.GetEnv("KAFKA_TOPIC", "outbox.event.user"),
+			Brokers: env.GetEnvAsSlice("KAFKA_BROKERS", []string{""}, ","),
+			GroupId: env.GetEnv("KAFKA_GROUP_ID", "catalyst"),
 		},
+		FromEmail: env.GetEnv("FROM_EMAIL", ""),
 		SmtpConfig: SmtpConfig{
 			Domain:   env.GetEnv("SMTP_DOMAIN", "smtp.gmail.com"),
 			Port:     env.GetEnvAsInt("SMTP_PORT", 587),

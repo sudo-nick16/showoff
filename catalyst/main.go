@@ -3,26 +3,19 @@ package main
 import "log"
 
 func main() {
-	c := SetupConfig()
+	config := SetupConfig()
 
-	econn, err := NewEmailClient(c.SmtpConfig.User, c.SmtpConfig.Domain, c.SmtpConfig.Port, c.SmtpConfig.User, c.SmtpConfig.Password)
+	emailClient, err := NewEmailClient(
+		config.SmtpConfig.User,
+		config.SmtpConfig.Domain,
+		config.SmtpConfig.Port,
+		config.SmtpConfig.User,
+		config.SmtpConfig.Password,
+	)
 	if err != nil {
-        log.Println("Error creating email client")
+		log.Printf("error: could not initialize email client - %v\n", err)
 		panic(err)
 	}
-	dbConn, err := NewConn()
-	if err != nil {
-		panic(err)
-	}
-	repo := NewRepo(dbConn)
-	offset, err := repo.GetOffset()
-	if err != nil {
-		panic(err)
-	}
-	subscriber := NewSubscriber(offset, econn, c.KafkaConfig.Brokers, c.KafkaConfig.Topic, c.KafkaConfig.Partition)
-	err = subscriber.init()
-	if err != nil {
-		panic(err)
-	}
+	subscriber := NewSubscriber(emailClient, config)
+	subscriber.initialize()
 }
-

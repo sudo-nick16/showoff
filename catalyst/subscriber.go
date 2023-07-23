@@ -8,81 +8,100 @@ import (
 	kafka "github.com/segmentio/kafka-go"
 )
 
-type UserEventPayload struct {
+type EventHeader struct {
+	Id interface{} `json:"id"`
+}
+
+type UserPayload struct {
 	Id       int    `json:"id"`
+	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Username string `json:"username"`
 }
 
-type Event struct {
-	Id   string      `json:"id"`
-	Type string      `json:"type"`
-	Data interface{} `json:"data"`
+type EventPayload struct {
+	Payload string `json:"payload"`
+	Type    string `json:"type"`
+}
+
+type Message struct {
+	Payload EventPayload `json:"payload"`
 }
 
 type Subscriber struct {
 	EmailClient *EmailClient
-	Brokers     []string
-	Partition   int
-	Topic       string
-	Offset      int64
+	reader      *kafka.Reader
 }
 
-func NewSubscriber(offset int64, emailClient *EmailClient, brokers []string, topic string, partition int) *Subscriber {
+func NewSubscriber(emailClient *EmailClient, config *Config) *Subscriber {
+	reader := kafka.NewReader(kafka.ReaderConfig{
+		Brokers:  config.KafkaConfig.Brokers,
+		Topic:    config.KafkaConfig.Topic,
+		GroupID:  config.KafkaConfig.GroupId,
+		MaxBytes: 10e6,
+	})
 	return &Subscriber{
 		EmailClient: emailClient,
-		Offset:      offset,
-		Partition:   partition,
-		Topic:       topic,
-		Brokers:     brokers,
+		reader:      reader,
 	}
 }
 
-func (s *Subscriber) init() error {
+func unmarshalUser(str string) (*UserPayload, error) {
+	payload := UserPayload{}
+	err := json.Unmarshal([]byte(str), &payload)
+	if err != nil {
+		log.Printf("error: could not unmarshal user from message payload - %v\n", err)
+	}
+	return &payload, nil
+}
 
-	r := kafka.NewReader(kafka.ReaderConfig{
-		Brokers:   s.Brokers,
-		Topic:     s.Topic,
-		Partition: s.Partition,
-		MaxBytes:  10e6, // 10MB
-	})
-
-	r.SetOffset(s.Offset)
-
+func (s *Subscriber) initialize() {
+	defer s.reader.Close()
 	for {
-		m, err := r.ReadMessage(context.Background())
+		message, err := s.reader.FetchMessage(context.Background())
 		if err != nil {
-			log.Printf("Err: cannot read message %+v\n", err)
-			break
+			log.Fatalf("error: could not read message from kafka - %v\n", err)
 		}
 
-		log.Printf("message at offset %d: %s = %s\n", m.Offset, string(m.Key), string(m.Value))
+		log.Printf("message at offset %d: %s = %s\n", message.Offset, string(message.Key), string(message.Value))
 
-		event := Event{}
-		err = json.Unmarshal(m.Value, &event)
+		messageValue := Message{}
+		err = json.Unmarshal(message.Value, &messageValue)
 		if err != nil {
-			log.Printf("Err: cannot unmarshal event payload %+v\n", err)
-			return err
+			log.Printf("error: could not unmarshal the kafka message - %v\n", err)
 		}
-		eventType := event.Data.(map[string]interface{})["type"]
-		switch eventType {
+
+		switch messageValue.Payload.Type {
 		case "user_created":
-			email := event.Data.(map[string]interface{})["email"].(string)
-			msg, err := NewEmail(s.EmailClient.from, email, "Go ahead and showcase your projects.", "Welcome to showoff!")
-			if err != nil {
-				log.Fatalf("Error creating mail: %v", err)
-			}
-			err = s.EmailClient.Send(msg)
-			if err != nil {
-				log.Fatalf("Error sending mail: %v", err)
+			{
+				usr, err := unmarshalUser(messageValue.Payload.Payload)
+				if err != nil {
+					log.Printf("error: could not create user - %v\n", err)
+				} 
+                if usr != nil && usr.Email != "" {
+					msg, err := NewEmail(s.EmailClient.from, usr.Email, "Go ahead and showcase your projects.", "Welcome to showoff!")
+					if err != nil {
+						log.Printf("error: could not create email message - %v", err)
+					}
+					err = s.EmailClient.Send(msg)
+					if err != nil {
+						log.Printf("error: could not send the email message - %v", err)
+					}
+				}
+				s.reader.CommitMessages(context.Background(), message)
 			}
 		default:
-			log.Printf("Unknown event type: %s", eventType)
+			{
+				log.Printf("error: unexpected event type (%v) - %v\n", messageValue.Payload.Type, err)
+			}
 		}
 	}
 
-	if err := r.Close(); err != nil {
-		log.Fatal("failed to close reader:", err)
+}
+
+func (s *Subscriber) Close() error {
+	if err := s.reader.Close(); err != nil {
+		log.Fatal("error: failed to close the kafka reader - ", err)
 		return err
 	}
 	return nil
