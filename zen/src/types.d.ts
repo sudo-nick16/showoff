@@ -1,6 +1,7 @@
 export type Project = {
-  id?: string;
+  _id?: string;
   title: string;
+  tagline: string;
   img: string;
   description: string;
   github_url: string;
@@ -10,15 +11,30 @@ export type Project = {
   upvotes?: number;
   slug?: string;
   username?: string;
+  user_id?: string;
 };
 
 export type User = {
   id: number;
   name: string;
   username: string;
-  headline: string;
-  description: string;
-  description: string;
   email: string;
   img: string
+  headline: string;
+  description: string;
+  githubId?: string;
+  website?: string;
 };
+
+export type Post = {
+  _id?: string;
+  title: string;
+  slug: string;
+  body: string;
+  project_id: string;
+  userId?: number;
+  username?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+

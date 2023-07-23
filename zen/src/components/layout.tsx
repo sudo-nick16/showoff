@@ -4,9 +4,8 @@ import Navbar from "./navbar";
 import { ThemeProvider } from "./theme-provider";
 import axios from "axios";
 import constants from "@/constants";
-import { logout, setAccessToken, setUser, useAppDispatch } from "@/store/store";
+import { logout, setAccessToken, setUserState, useAppDispatch } from "@/store/store";
 import useAxios from "@/hooks/useAxios";
-import ProjectForm from "./project-form";
 
 type Props = {
   children: React.ReactNode;
@@ -18,23 +17,21 @@ const Layout: NextPage<Props> = ({ children }) => {
 
   useEffect(() => {
     const fetchMe = async () => {
-      const res = await api.get("/users/me");
-      console.log("fetch me", res.data);
+      const res = await api.get("/apex/users/me");
       if (!res.data?.error) {
-        appDispatch(setUser(res.data));
+        appDispatch(setUserState(res.data));
       }
     };
 
     const fetchRefreshToken = async () => {
       try {
         const response = await axios.post(
-          `${constants.ServerURL}/auth/refresh-token`,
+          `${constants.ServerURL}/apex/auth/refresh-token`,
           {},
           {
             withCredentials: true,
           }
         );
-        console.log("refresh token response", response.data);
         if (!response.data?.error && response.data?.accessToken) {
           appDispatch(setAccessToken(response.data.accessToken));
           return response.data.accessToken;
@@ -58,7 +55,6 @@ const Layout: NextPage<Props> = ({ children }) => {
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <Navbar />
-      <ProjectForm />
       {children}
     </ThemeProvider>
   );

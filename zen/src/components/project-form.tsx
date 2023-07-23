@@ -7,6 +7,7 @@ import {
   setGithubUrl,
   setHostedUrl,
   setImg,
+  setTagline,
   setTech,
   setTitle,
   useAppDispatch,
@@ -26,43 +27,57 @@ import {
 import { GitHubLogoIcon, GlobeIcon } from "@radix-ui/react-icons";
 import { Textarea } from "./ui/textarea";
 import { Badge } from "./ui/badge";
-import { Project } from "@/types";
 import useAxios from "@/hooks/useAxios";
 
 type ProjectFormWrapperProps = {
   children?: React.ReactNode;
+  callback?: (data: any) => void;
 };
 
-const ProjectForm = () => {
+const ProjectForm = ({ callback }: { callback?: <T>(data: T) => void }) => {
   const appDispatch = useAppDispatch();
   const projectForm = useSelector<RootState, RootState["projectForm"]>(
     (store) => store.projectForm
+  );
+  const userState = useSelector<RootState, RootState["auth"]>(
+    (store) => store.auth
   );
   const api = useAxios();
 
   const submitHandler = async () => {
     const projectData = {
+      _id: projectForm._id,
       title: projectForm.title,
       img: projectForm.img,
+      tagline: projectForm.tagline,
       description: projectForm.description,
       github_url: projectForm.github_url,
       hosted_url: projectForm.hosted_url,
       tech: JSON.stringify(projectForm.tech),
     };
+    let res;
     if (projectForm.mode === ProjectFormMode.CreateMode) {
-      const res = await api.post("/projects", projectData, {
+      res = await api.post("/stellar/projects", projectData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-      console.log(res);
+      if (!res?.data.error) {
+        res = await api.get(`/stellar/users/${userState.user?.username}/projects`)
+      }
     } else if (projectForm.mode === ProjectFormMode.EditMode) {
-      const res = await api.post("/projects", projectData, {
+      res = await api.put(`/stellar/projects/${projectForm._id}`, projectData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-      console.log(res);
+    }
+    if (!res?.data.error) {
+      // const res = await api.get(`/stellar/users/${userState.user?.username}/projects`);
+      // console.log(res.data);
+      // if (!res.data.error) {
+      callback && callback(res?.data);
+      // }
     }
   };
 
@@ -88,6 +103,17 @@ const ProjectForm = () => {
               id="title"
               onChange={(e) => appDispatch(setTitle(e.target.value))}
               value={projectForm.title}
+              className="col-span-3"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="tagline" className="text-right">
+              Tagline
+            </Label>
+            <Input
+              id="tagline"
+              onChange={(e) => appDispatch(setTagline(e.target.value))}
+              value={projectForm.tagline}
               className="col-span-3"
             />
           </div>
@@ -141,8 +167,8 @@ const ProjectForm = () => {
             </Label>
             <Input
               id="technologies"
-              onChange={(e) => appDispatch(setTech(e.target.value))}
-              value={projectForm.techstr}
+              onChange={(e) => appDispatch(setTech(e.target.value.split(",")))}
+              value={projectForm.tech.join(",")}
               className="col-span-3"
             />
           </div>
@@ -171,11 +197,12 @@ const ProjectForm = () => {
 
 const ProjectFormWrapper: NextPage<ProjectFormWrapperProps> = ({
   children,
+  callback,
 }) => {
   return (
     <Dialog>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <ProjectForm />
+      <ProjectForm callback={callback} />
     </Dialog>
   );
 };

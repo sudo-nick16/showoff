@@ -1,4 +1,4 @@
-import { Project, User } from "@/types";
+import { Post, Project, User } from "@/types";
 import { PayloadAction, configureStore, createSlice } from "@reduxjs/toolkit";
 import { useDispatch, useSelector } from "react-redux";
 
@@ -12,13 +12,14 @@ const projectForm = createSlice({
   initialState: {
     show: true,
     mode: ProjectFormMode.CreateMode,
+    _id: "",
     title: "",
+    tagline: "",
     description: "",
     img: "",
     github_url: "",
     hosted_url: "",
     tech: [] as string[],
-    techstr: "",
   },
   reducers: {
     setTitle: (state, action: PayloadAction<string>) => {
@@ -33,43 +34,46 @@ const projectForm = createSlice({
     setGithubUrl: (state, action: PayloadAction<string>) => {
       state.github_url = action.payload;
     },
+    setTagline: (state, action: PayloadAction<string>) => {
+      state.tagline = action.payload;
+    },
     setHostedUrl: (state, action: PayloadAction<string>) => {
       state.hosted_url = action.payload;
     },
-    setTech: (state, action: PayloadAction<string>) => {
-      state.techstr = action.payload;
-      state.tech = action.payload.split(",");
+    setTech: (state, action: PayloadAction<string[]>) => {
+      state.tech = action.payload
     },
-    setCreateMode: (state, _) => {
+    createNewProject: (state) => {
       state.mode = ProjectFormMode.CreateMode;
       state.title = "";
+      state.tagline = "";
       state.description = "";
       state.img = "";
       state.github_url = "";
       state.hosted_url = "";
       state.tech = [];
-      state.techstr = "";
       state.show = true;
     },
-    setEditMode: (state, action: PayloadAction<Project>) => {
+    editProject: (state, action: PayloadAction<Project>) => {
       state.mode = ProjectFormMode.EditMode;
+      state._id = action.payload._id!;
       state.title = action.payload.title;
+      state.tagline = action.payload.tagline;
       state.description = action.payload.description;
       state.img = action.payload.img;
       state.github_url = action.payload.github_url;
       state.hosted_url = action.payload.hosted_url;
       state.tech = action.payload.tech;
-      state.techstr = action.payload.tech.join(",");
       state.show = true;
     },
-    clearForm: (state, _) => {
+    clearForm: (state) => {
       state.title = "";
+      state.tagline = "";
       state.description = "";
       state.img = "";
       state.github_url = "";
       state.hosted_url = "";
       state.tech = [];
-      state.techstr = "";
       state.show = false;
     },
   },
@@ -80,10 +84,11 @@ export const {
   setDescription,
   setImg,
   setGithubUrl,
+  setTagline,
   setHostedUrl,
   setTech,
-  setCreateMode,
-  setEditMode,
+  createNewProject,
+  editProject,
   clearForm,
 } = projectForm.actions;
 
@@ -95,6 +100,8 @@ const userForm = createSlice({
     name: "",
     headline: "",
     description: "",
+    website: "",
+    githubId: "",
   },
   reducers: {
     setUserUsername: (state, action: PayloadAction<string>) => {
@@ -102,6 +109,12 @@ const userForm = createSlice({
     },
     setUserName: (state, action: PayloadAction<string>) => {
       state.name = action.payload;
+    },
+    setUserGithubId: (state, action: PayloadAction<string>) => {
+      state.githubId = action.payload;
+    },
+    setUserWebsite: (state, action: PayloadAction<string>) => {
+      state.website = action.payload;
     },
     setUserDescription: (state, action: PayloadAction<string>) => {
       state.description = action.payload;
@@ -116,12 +129,16 @@ const userForm = createSlice({
         name: string;
         description: string;
         headline: string;
+        githubId: string;
+        website: string;
       }>
     ) => {
       state.username = action.payload.username;
       state.name = action.payload.name;
       state.headline = action.payload.headline;
       state.description = action.payload.description;
+      state.website = action.payload.website;
+      state.githubId = action.payload.githubId;
       state.show = true;
     },
     hideUserForm: (state, _) => {
@@ -129,6 +146,8 @@ const userForm = createSlice({
       state.name = "";
       state.headline = "";
       state.description = "";
+      state.website = "";
+      state.githubId = "";
       state.show = false;
     },
   },
@@ -138,13 +157,74 @@ export const {
   setUserUsername,
   setUserHeadline,
   setUserName,
+  setUserWebsite,
+  setUserGithubId,
   showUserForm,
   hideUserForm,
   setUserDescription,
 } = userForm.actions;
 
+
+export enum PostMode {
+  CreateMode,
+  EditMode,
+}
+
+const postForm = createSlice({
+  name: "postForm",
+  initialState: {
+    show: false,
+    mode: PostMode.CreateMode,
+    _id: "",
+    title: "",
+    body: "",
+    project_id: "",
+  },
+  reducers: {
+    setPostTitle: (state, action: PayloadAction<string>) => {
+      state.title = action.payload;
+    },
+    setPostBody: (state, action: PayloadAction<string>) => {
+      state.body = action.payload;
+    },
+    createPost: (state, action: PayloadAction<string>) => {
+      state.show = true;
+      state.mode = PostMode.CreateMode;
+      state._id = "";
+      state.title = "";
+      state.body = "";
+      state.project_id = action.payload;
+    },
+    editPost: (state, action: PayloadAction<Post>) => {
+      state.show = true;
+      state.mode = PostMode.EditMode;
+      state._id = action.payload._id!;
+      state.title = action.payload.title;
+      state.body = action.payload.body;
+      state.project_id = action.payload.project_id;
+    },
+    hidePostForm: (state) => {
+      state.show = false;
+      state.mode = PostMode.CreateMode;
+      state._id = "";
+      state.title = "";
+      state.body = "";
+      state.project_id = "";
+    }
+  }
+})
+
+export const {
+  setPostTitle,
+  setPostBody,
+  createPost,
+  editPost,
+  hidePostForm
+} = postForm.actions
+
+
 const authState = createSlice({
-  name: "auth",
+  name: "user",
   initialState: {
     accessToken: "",
     user: undefined as User | undefined,
@@ -153,7 +233,7 @@ const authState = createSlice({
     setAccessToken: (state, action: PayloadAction<string>) => {
       state.accessToken = action.payload;
     },
-    setUser: (state, action: PayloadAction<User | undefined>) => {
+    setUserState: (state, action: PayloadAction<User | undefined>) => {
       state.user = action.payload;
     },
     logout: (state) => {
@@ -163,13 +243,14 @@ const authState = createSlice({
   },
 });
 
-export const { setAccessToken, setUser, logout } = authState.actions;
+export const { setAccessToken, setUserState, logout } = authState.actions;
 
 export const Store = configureStore({
   reducer: {
     auth: authState.reducer,
     projectForm: projectForm.reducer,
     userForm: userForm.reducer,
+    postForm: postForm.reducer
   },
 });
 

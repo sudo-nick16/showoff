@@ -15,12 +15,11 @@ import { Button } from "./ui/button";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
-import { RootState, useAppDispatch, logout, showUserForm } from "@/store/store";
+import { RootState, useAppDispatch, logout } from "@/store/store";
 import useAxios from "@/hooks/useAxios";
-import UserFormWrapper from "./user-form";
 
 type Props = {};
-const Navbar: NextPage<Props> = ({}) => {
+const Navbar: NextPage<Props> = ({ }) => {
   const authState = useSelector<RootState, RootState["auth"]>(
     (state) => state.auth
   );
@@ -30,7 +29,7 @@ const Navbar: NextPage<Props> = ({}) => {
   const api = useAxios();
 
   const logoutHandler = async () => {
-    const res = await api.post("/auth/logout", {}, {});
+    const res = await api.post("/apex/auth/logout", {});
     if (!res.data.error) {
       router.push("/login");
       appDispatch(logout());
@@ -38,7 +37,7 @@ const Navbar: NextPage<Props> = ({}) => {
   };
 
   return (
-    <div className="border-b">
+    <div className="border-b backdrop-blur sticky top-0 z-[10]">
       <Container className="py-4 px-3 flex justify-between items-center gap-x-4">
         <div className="relative hidden sm:block w-[120px] min-w-[120px] h-[40px] min-h-[40px]">
           <Image
@@ -54,7 +53,7 @@ const Navbar: NextPage<Props> = ({}) => {
               <DropdownMenuTrigger>
                 <div className="relative h-10 w-10">
                   <Image
-                    src="https://avatars.githubusercontent.com/u/73229823?v=4"
+                    src={authState.user.img}
                     layout="fill"
                     alt=""
                   />
@@ -65,9 +64,6 @@ const Navbar: NextPage<Props> = ({}) => {
                 <DropdownMenuSeparator />
                 <Link href={`/${authState.user.username}`}>
                   <DropdownMenuItem>Profile</DropdownMenuItem>
-                </Link>
-                <Link href={`/my-projects`}>
-                  <DropdownMenuItem>Projects</DropdownMenuItem>
                 </Link>
                 <DropdownMenuItem onClick={logoutHandler}>
                   Sign out

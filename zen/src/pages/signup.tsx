@@ -6,7 +6,7 @@ import React from "react";
 
 const Signup = () => {
   const handleSignup = () => {
-    window.location.assign(constants.ServerURL + "/auth/google");
+    window.location.assign(constants.ServerURL + "/apex/auth/google");
   };
   return (
     <Container className="my-10 h-[calc(100dvh-12rem)] flex items-center justify-center">

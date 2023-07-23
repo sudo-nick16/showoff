@@ -16,6 +16,7 @@ const useAxios = () => {
     headers: {
       Authorization: `JWT ${store.getState().auth.accessToken}`,
     },
+    withCredentials: true,
     validateStatus: () => {
       // don't want axios throwin error on 4xx and 5xx #sorry axios
       return true;
@@ -25,7 +26,7 @@ const useAxios = () => {
   const refreshToken = async () => {
     console.log("refreshing token");
     const response = await axios.post(
-      `${constants.ServerURL}/auth/refresh-token`,
+      `${constants.ServerURL}/apex/auth/refresh-token`,
       {},
       {
         headers: {
@@ -121,7 +122,7 @@ const useAxios = () => {
       return response;
     },
     async (error) => {
-      console.log({error})
+      console.log({ error })
       if (error) {
         appDispatch(logout());
       }
