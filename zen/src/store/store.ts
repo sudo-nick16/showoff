@@ -245,12 +245,35 @@ const authState = createSlice({
 
 export const { setAccessToken, setUserState, logout } = authState.actions;
 
+const searchForm = createSlice({
+    name: "searchForm",
+    initialState: {
+        query: "",
+        filter: "default"
+    },
+    reducers: {
+        setQuery: (state, action: PayloadAction<string>) => {
+            state.query = action.payload
+        },
+        setFilter: (state, action: PayloadAction<string>) => {
+            state.filter = action.payload
+        },
+        clearSearch: (state) => {
+            state.query = ""
+            state.filter = "default"
+        }
+    }
+})
+
+export const { setQuery, setFilter, clearSearch } = searchForm.actions
+
 export const Store = configureStore({
   reducer: {
     auth: authState.reducer,
     projectForm: projectForm.reducer,
     userForm: userForm.reducer,
-    postForm: postForm.reducer
+    postForm: postForm.reducer,
+    searchForm: searchForm.reducer
   },
 });
 

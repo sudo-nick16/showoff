@@ -15,8 +15,10 @@ import { Button } from "./ui/button";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
-import { RootState, useAppDispatch, logout } from "@/store/store";
+import { RootState, useAppDispatch, logout, setQuery } from "@/store/store";
 import useAxios from "@/hooks/useAxios";
+import { Filters } from "./filters";
+import SearchBar from "./search-bar";
 
 type Props = {};
 const Navbar: NextPage<Props> = ({ }) => {
@@ -40,23 +42,15 @@ const Navbar: NextPage<Props> = ({ }) => {
     <div className="border-b backdrop-blur sticky top-0 z-[10]">
       <Container className="py-4 px-3 flex justify-between items-center gap-x-4">
         <div className="relative hidden sm:block w-[120px] min-w-[120px] h-[40px] min-h-[40px]">
-          <Image
-            src={"/showoff.svg"}
-            layout="fill"
-            alt="Showoff Logo"
-          />
+          <Image src={"/showoff.svg"} layout="fill" alt="Showoff Logo" />
         </div>
         <div className="flex w-full sm:w-auto gap-x-4">
-          <Input className="sm:w-96" placeholder="Search" />
+          <SearchBar />
           {authState.user ? (
             <DropdownMenu>
               <DropdownMenuTrigger>
                 <div className="relative h-10 w-10">
-                  <Image
-                    src={authState.user.img}
-                    layout="fill"
-                    alt=""
-                  />
+                  <Image src={authState.user.img} layout="fill" alt="" />
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent>

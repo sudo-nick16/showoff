@@ -172,6 +172,7 @@ export const getServerSideProps = async (ctx: NextPageContext) => {
     console.log(e);
     return {
       notFound: true,
+      fallback: "blocking",
     };
   }
 };

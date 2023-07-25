@@ -100,7 +100,7 @@ const Profile: NextPage<
           <TabsTrigger value="posts">Posts</TabsTrigger>
         </TabsList>
         <TabsContent value="projects" className="w-full">
-          <div className="flex flex-wrap gap-6 w-full justify-center">
+          <div className="flex flex-col gap-6 w-full justify-center">
             {projects.map((p, i) => (
               <ProjectCard
                 setProjects={setProjects}
