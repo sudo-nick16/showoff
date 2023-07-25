@@ -19,6 +19,7 @@ import {
 } from "@radix-ui/react-icons";
 import axios from "axios";
 import { InferGetServerSidePropsType, NextPage, NextPageContext } from "next";
+import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -39,6 +40,9 @@ const ProjectPage: NextPage<
   console.log(project, posts);
   return (
     <Container md>
+      <Head>
+        <title key="title">{project?.title}</title>
+      </Head>
       <GlassContainer className="mt-10 flex flex-col items-start justify-start sm:flex-row gap-x-8">
         <div className="relative w-32 h-32 rounded-2xl overflow-hidden">
           <Image

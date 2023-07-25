@@ -16,6 +16,7 @@ import { Project, User } from "@/types";
 import { GitHubLogoIcon, GlobeIcon, PlusIcon } from "@radix-ui/react-icons";
 import axios from "axios";
 import { InferGetServerSidePropsType, NextPage, NextPageContext } from "next";
+import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import React, { useState } from "react";
@@ -35,6 +36,9 @@ const Profile: NextPage<
 
   return (
     <Container className="py-8 flex flex-col justify-center items-start max-w-[800px]">
+      <Head>
+        <title key="title">{user.name}</title>
+      </Head>
       <div className="mt-4 w-full flex flex-col items-center sm:items-start sm:flex-row gap-y-4 gap-x-10">
         <div className="relative w-40 h-40 rounded-xl">
           <Image src={user.img!} alt="sudo-nick" layout="fill" />
